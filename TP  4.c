@@ -1,0 +1,195 @@
+// Dans ce TP, nous avons étudié la structure de données Pile dynamique. L’objectif est de manipuler des grands nombres en les représentant sous forme de pile, où chaque élément contient un paquet de chiffres.
+
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+
+// Structure représentant un élément de la pile ,Chaque élément contient une valeur (Paquet) et un pointeur vers l’élément précédent
+typedef struct ElementPile
+{
+    int Paquet;
+    struct ElementPile *Precedent;
+} Element;
+
+// Structure représentant un grand nombre sous forme de pile
+// Sommet : pointeur vers le haut de la pile
+// Npaquets : nombre d’éléments dans la pile
+typedef struct
+{
+    Element *Sommet;
+    int Npaquets;
+} GrandNombre;
+
+// Cette fonction initialise une pile vide. Elle met le sommet à NULL et initialise le nombre de paquets à 0
+void initialisation(GrandNombre *G)
+{
+    G->Sommet = NULL;
+    G->Npaquets = 0;
+}
+
+// Cette fonction vérifie si la pile est vide. Elle retourne 1 si la pile ne contient aucun élément, sinon 0
+int pileVide(GrandNombre G)
+{
+    return (G.Sommet == NULL);
+}
+
+// Cette fonction vérifie si la pile est pleine. Dans une pile dynamique
+int pilePleine(GrandNombre G)
+{
+    Element *nv = (Element *)malloc(sizeof(Element));
+    if (nv == NULL)
+        return 1;
+
+    free(nv);
+    return 0;
+}
+
+// Cette fonction empile (ajoute) un nouvel élément au sommet de la pile. Elle alloue de la mémoire pour un nouvel élément, initialise sa valeur et met à jour le sommet de la pile Retourne 0 en cas de succès, ou -1 en cas d’échec d’allocation
+int Empiler(GrandNombre *G, int val)
+{
+
+    Element *nouveau;
+    nouveau = (Element *)malloc(sizeof(Element));
+    if (nouveau == NULL)
+        return -1;
+
+    nouveau->Paquet = val;
+    nouveau->Precedent = G->Sommet;
+    G->Sommet = nouveau;
+    G->Npaquets++;
+
+    return 0;
+}
+
+// Cette fonction dépile (supprime) l’élément du sommet de la pile. Elle met à jour le sommet vers l’élément précédent, libère la mémoire de l’élément supprimé. Retourne -1 si la pile est vide, sinon 0
+int Depiler(GrandNombre *G)
+{
+    if (G->Npaquets == 0)
+        return 0;
+
+    Element *sup_element = G->Sommet;
+    int val = G->Sommet->Paquet;
+
+    G->Sommet = G->Sommet->Precedent;
+    free(sup_element);
+    G->Npaquets--;
+
+    return val;
+}
+
+// Cette fonction vide complètement la pile. Elle appelle la fonction Depiler jusqu’à ce que la pile soit vide
+void Vider(GrandNombre *G)
+{
+    while (!pileVide(*G))
+        Depiler(G);
+}
+
+// Cette fonction remplit la pile à partir d’une chaîne de caractères. Le nombre est découpé en blocs de 4 chiffres (paquets), puis chaque bloc est converti en entier et empilé dans la pile
+void remplir(char *chaine, GrandNombre *G)
+{
+    int L = strlen(chaine);
+    int reste = L % 4;
+    int N = L / 4;
+    char ch4[5];
+    char ch_reste[5];
+    int val, i;
+
+    for (i = 0; i < N; i++)
+    {
+
+        val = L - 4 * (i + 1);
+        strncpy(ch4, &chaine[val], 4);
+        Empiler(G, atoi(ch4));
+    }
+
+    if (reste != 0)
+    {
+        strncpy(ch_reste, chaine, reste);
+        Empiler(G, atoi(ch_reste));
+    }
+}
+
+// Cette fonction est destinée à calculer la somme de deux grands nombres
+// représentés par des piles G1 et G2, et stocker le résultat dans G3
+// Elle doit gérer les retenues (carry) entre les paquets
+// (Remarque : la fonction est encore incomplète et nécessite correction)
+void Somme(GrandNombre *G1, GrandNombre *G2, GrandNombre *S)
+{
+    int retenue = 0;
+    int paquet1, paquet2, res;
+
+    while (!pileVide(*G1) || !pileVide(*G2) || retenue > 0)
+    {
+        paquet1 = pileVide(*G1) ? 0 : Depiler(G1);
+        paquet2 = pileVide(*G2) ? 0 : Depiler(G2);
+        res = paquet1 + paquet2 + retenue;
+
+        retenue = res / 10000;
+        res = res % 10000;
+
+        Empiler(S, res);
+    }
+}
+
+// Cette fonction affiche le grand nombre stocké dans la pile. Elle parcourt la pile depuis le sommet et affiche chaque paquet, en respectant le format de 4 chiffres
+void Afficher(GrandNombre G)
+{
+    Element *courant = G.Sommet;
+    char ch[5];
+    int first = 1;
+
+    while (courant != NULL)
+    {
+        if (first)
+        {
+            sprintf(ch, "%d", courant->Paquet);
+            first = 0;
+        }
+        else
+        {
+            if (courant->Paquet < 10)
+                sprintf(ch, "000%d", courant->Paquet);
+            else if (courant->Paquet <= 99)
+                sprintf(ch, "00%d", courant->Paquet);
+            else if (courant->Paquet <= 999)
+                sprintf(ch, "0%d", courant->Paquet);
+            else
+                sprintf(ch, "%d", courant->Paquet);
+        }
+
+        printf("%s", ch);
+        courant = courant->Precedent;
+    }
+
+    printf("\n");
+}
+
+// Fonction principale (main)
+int main()
+{
+    GrandNombre G1, G2, G3;
+
+    initialisation(&G1);
+    initialisation(&G2);
+    initialisation(&G3);
+
+    remplir("2225555999999999999", &G1);
+    remplir("7774542225254845", &G2);
+
+    printf("G1 = ");
+    Afficher(G1);
+
+    printf("G2 = ");
+    Afficher(G2);
+
+    Somme(&G1, &G2, &G3);
+
+    printf("G1 + G2 = ");
+    Afficher(G3);
+
+    Vider(&G1);
+    Vider(&G2);
+    Vider(&G3);
+
+    return 0;
+}
